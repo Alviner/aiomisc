@@ -6,6 +6,7 @@ from . import log
 
 from .backoff import asyncbackoff
 from .context import Context, get_context
+from .circuit_breaker import CircuitBreaker, CircuitBroken, cutoff
 from .entrypoint import entrypoint
 from .periodic import PeriodicCallback
 from .service import Service
@@ -57,6 +58,8 @@ __all__ = (
     'awaitable',
     'bind_socket',
     'cancel_tasks',
+    'CircuitBreaker',
+    'CircuitBroken',
     'chunk_list',
     'Context',
     'context_partial',
