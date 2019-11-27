@@ -762,7 +762,7 @@ the method in order to gather it.
 
 .. code-block:: python
 
-    import asyncio
+    import aiomisc
 
     circuit_breaker = aiomisc.CircuitBreaker(
         ratio=0.5,
