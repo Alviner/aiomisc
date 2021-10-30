@@ -77,7 +77,7 @@ def test_register():
             counter = 0
             await asyncio.wait_for(
                 condition.wait_for(lambda: counter == 5),
-                timeout=4
+                timeout=5
             )
             with suppress(asyncio.CancelledError):
                 await svc.stop()
