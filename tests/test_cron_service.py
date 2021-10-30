@@ -69,9 +69,8 @@ def test_register():
 
     async def assert_counter():
         nonlocal counter, svc
-
-        counter = 0
         async with condition:
+            counter = 0
             await condition.wait_for(lambda: counter == 5)
             await svc.stop()
 
@@ -80,4 +79,4 @@ def test_register():
 
     with aiomisc.entrypoint(svc) as loop:
         condition = asyncio.Condition()
-        loop.run_until_complete(asyncio.wait_for(assert_counter(), timeout=4))
+        loop.run_until_complete(asyncio.wait_for(assert_counter(), timeout=10))
