@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from asyncio import iscoroutinefunction
-from typing import Any, Callable, NamedTuple, Set, Tuple, Type
+from typing import Any, Callable, NamedTuple, Set, Tuple, Type, Awaitable
 
 from croniter import croniter
 
@@ -56,11 +56,8 @@ class CronService(Service):
         log.info("Cron service %s started", self)
 
     async def stop(self, exception: Exception = None) -> None:
-        async def _shutdown(item: StoreItem) -> None:
-            if item.callback.task:
-                await item.callback.task
-            # noinspection PyAsyncCall
-            item.callback.stop()
+        def _shutdown(item: StoreItem) -> Awaitable:
+            return item.callback.stop()
 
         await asyncio.gather(
             *[_shutdown(store) for store in self._callbacks_storage],

@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 
 import pytest
 
@@ -28,7 +29,7 @@ def test_cron():
     condition = None
 
     async def callback():
-        nonlocal counter
+        nonlocal counter, condition
         async with condition:
             counter += 1
             condition.notify_all()
@@ -38,11 +39,14 @@ def test_cron():
 
     async def assert_counter():
         nonlocal counter, svc
-
-        counter = 0
         async with condition:
-            await condition.wait_for(lambda: counter == 1)
-            await svc.stop()
+            counter = 0
+            await asyncio.wait_for(
+                condition.wait_for(lambda: counter == 1),
+                timeout=3
+            )
+            with suppress(asyncio.CancelledError):
+                await svc.stop()
         await asyncio.sleep(1)
         assert counter == 1
 
@@ -71,8 +75,12 @@ def test_register():
         nonlocal counter, svc
         async with condition:
             counter = 0
-            await condition.wait_for(lambda: counter == 5)
-            await svc.stop()
+            await asyncio.wait_for(
+                condition.wait_for(lambda: counter == 5),
+                timeout=4
+            )
+            with suppress(asyncio.CancelledError):
+                await svc.stop()
 
         await asyncio.sleep(1)
         assert counter == 5

@@ -16,19 +16,21 @@ async def test_cron(loop):
         nonlocal counter
         async with condition:
             counter += 1
-            await asyncio.sleep(0)
             condition.notify_all()
 
     cron = CronCallback(task)
-    cron.start("* * * * * *", loop)
-
-    await asyncio.sleep(2)
     async with condition:
-        await cron.stop()
+        cron.start("* * * * * *", loop)
+        await asyncio.wait_for(
+            condition.wait_for(lambda: counter == 2),
+            timeout=3
+        )
+        with suppress(asyncio.CancelledError):
+            await cron.stop()
 
     assert counter == 2
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
 
     assert counter == 2
 
@@ -45,14 +47,17 @@ async def test_long_func(loop):
             condition.notify_all()
 
     cron = CronCallback(task)
-    cron.start("* * * * * *", loop)
 
-    await asyncio.sleep(1)
     async with condition:
-        await cron.stop()
-    await asyncio.sleep(2)
-
-    assert counter == 1
+        cron.start("* * * * * *", loop)
+        await asyncio.wait_for(
+            condition.wait_for(lambda: counter == 2),
+            timeout=5
+        )
+        with suppress(asyncio.CancelledError):
+            await cron.stop()
+    await asyncio.sleep(1)
+    assert counter == 2
 
 
 async def test_shield(loop):
@@ -67,14 +72,12 @@ async def test_shield(loop):
             condition.notify_all()
 
     cron = CronCallback(task)
-    cron.start("* * * * * *", loop, shield=True)
-
-    # Wait for cron callback to start
-    while cron.task is None:
-        await asyncio.sleep(0.1)
-
     async with condition:
-        await condition.wait_for(lambda: counter == 1)
+        cron.start("* * * * * *", loop, shield=True)
+        await asyncio.wait_for(
+            condition.wait_for(lambda: counter == 1),
+            timeout=3
+        )
         with suppress(asyncio.CancelledError):
             await cron.stop()
 
@@ -114,20 +117,27 @@ async def test_restart(loop):
             condition.notify_all()
 
     cron = CronCallback(task)
-    cron.start("* * * * * *", loop)
-
     async with condition:
-        await condition.wait_for(lambda: counter == 2)
-        await cron.stop()
-
+        cron.start("* * * * * *", loop)
+        await asyncio.wait_for(
+            condition.wait_for(lambda: counter == 2),
+            timeout=4
+        )
+        with suppress(asyncio.CancelledError):
+            await cron.stop()
+    await asyncio.sleep(1)
     assert counter == 2
 
     cron.start("* * * * * *", loop)
 
     async with condition:
-        await condition.wait_for(lambda: counter == 4)
-        await cron.stop()
-
+        await asyncio.wait_for(
+            condition.wait_for(lambda: counter == 4),
+            timeout=4
+        )
+        with suppress(asyncio.CancelledError):
+            await cron.stop()
+    await asyncio.sleep(1)
     assert counter == 4
 
 
